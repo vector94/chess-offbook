@@ -1,18 +1,38 @@
-import { Board3D } from "./components/Board3D";
+import { Chessboard } from "react-chessboard";
+import { Controls } from "./components/Controls";
+import { StatusBanner } from "./components/StatusBanner";
+import { useChessGame } from "./hooks/useChessGame";
+import { buildSquareStyles } from "./lib/squareStyles";
 import "./App.css";
 
-const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
 function App() {
+  const chessGame = useChessGame();
+
   return (
     <div className="app">
-      <Board3D
-        fen={START_FEN}
-        orientation="white"
-        selectedSquare={null}
-        legalTargets={[]}
-        onSquareClick={() => {}}
-      />
+      <div className="board-pane">
+        <div className="board-wrapper">
+          <Chessboard
+            options={{
+              position: chessGame.fen,
+              boardOrientation: chessGame.orientation,
+              onPieceDrop: ({ sourceSquare, targetSquare }) =>
+                targetSquare
+                  ? chessGame.attemptMove(sourceSquare, targetSquare)
+                  : false,
+              onSquareClick: ({ square }) => chessGame.selectSquare(square),
+              squareStyles: buildSquareStyles(
+                chessGame.selectedSquare,
+                chessGame.legalTargets,
+              ),
+            }}
+          />
+        </div>
+      </div>
+      <div className="sidebar">
+        <StatusBanner status={chessGame.status} />
+        <Controls onReset={chessGame.reset} onFlip={chessGame.flipBoard} />
+      </div>
     </div>
   );
 }
