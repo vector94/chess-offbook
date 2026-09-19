@@ -28,8 +28,13 @@ export function parseExplorerResponse(raw: RawExplorerResponse): ExplorerResult 
 
 export async function fetchExplorer(fen: string): Promise<ExplorerResult> {
   const url = `${EXPLORER_URL}?fen=${encodeURIComponent(fen)}&speeds=${SPEEDS}&ratings=${RATINGS}&topGames=0&recentGames=0`;
-  const response = await fetch(url);
+  const token: string | undefined = import.meta.env.VITE_LICHESS_TOKEN;
+  const headers: HeadersInit | undefined = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const response = await fetch(url, { headers });
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Lichess Explorer requires an API token — see web/README.md");
+    }
     throw new Error(`explorer request failed: ${response.status}`);
   }
   const raw = (await response.json()) as RawExplorerResponse;

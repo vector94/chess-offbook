@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (may contain the Lichess API token) — .env.example is the committed placeholder
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
