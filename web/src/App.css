@@ -50,3 +50,46 @@ html, body, #root {
   padding: 8px 12px;
   cursor: pointer;
 }
+
+.explorer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.explorer-move {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: #2a2a2a;
+  border: none;
+  border-radius: 4px;
+  color: #eee;
+  cursor: pointer;
+  text-align: left;
+}
+
+.explorer-move:hover {
+  background: #3a3a3a;
+}
+
+.explorer-move-san {
+  font-weight: 600;
+}
+
+.explorer-move-games {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.explorer-move-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-white { background: #f5f5f0; }
+.bar-draw { background: #888; }
+.bar-black { background: #2b2b2b; }

@@ -1,12 +1,15 @@
 import { Chessboard } from "react-chessboard";
 import { Controls } from "./components/Controls";
 import { StatusBanner } from "./components/StatusBanner";
+import { ExplorerPanel } from "./components/ExplorerPanel";
 import { useChessGame } from "./hooks/useChessGame";
+import { useExplorer } from "./hooks/useExplorer";
 import { buildSquareStyles } from "./lib/squareStyles";
 import "./App.css";
 
 function App() {
   const chessGame = useChessGame();
+  const explorer = useExplorer(chessGame.fen);
 
   return (
     <div className="app">
@@ -32,6 +35,7 @@ function App() {
       <div className="sidebar">
         <StatusBanner status={chessGame.status} />
         <Controls onReset={chessGame.reset} onFlip={chessGame.flipBoard} />
+        <ExplorerPanel state={explorer.state} onPlayMove={chessGame.playMove} onRetry={explorer.retry} />
       </div>
     </div>
   );
