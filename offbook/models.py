@@ -38,3 +38,11 @@ class BookMove(BaseModel):
 class Deviation(BaseModel):
     ply: int
     book_moves: list[BookMove]
+
+
+class ExplainRequest(BaseModel):
+    fen: str
+    played_san: str
+    book_moves: list[BookMove]
+    opening_name: str | None
+    game_result: str
