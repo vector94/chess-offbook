@@ -1,18 +1,14 @@
 import { type SubmitEvent, useState } from "react";
 import "./App.css";
 import { GameReview } from "./components/GameReview";
+import type { RequestState } from "./hooks/useRequest";
 import { getLatestGame } from "./lib/api";
 import type { LatestGame } from "./lib/models";
-
-type LatestGameState =
-  | { phase: "loading" }
-  | { phase: "error"; message: string }
-  | { phase: "done"; data: LatestGame };
 
 export function App() {
   const [username, setUsername] = useState("");
   // null until the first search
-  const [latestGame, setLatestGame] = useState<LatestGameState | null>(null);
+  const [latestGame, setLatestGame] = useState<RequestState<LatestGame> | null>(null);
 
   async function checkLatestGame(event: SubmitEvent) {
     event.preventDefault();

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
 import type { Game } from "../lib/models";
 import { replayPgn } from "../lib/pgnReplay";
+import { DeviationCallout } from "./Callouts";
 
 export function GameReview({ game }: { game: Game }) {
   const moves = useMemo(() => replayPgn(game.pgn), [game.pgn]);
@@ -44,19 +45,7 @@ export function GameReview({ game }: { game: Game }) {
           <strong>{game.opening_name ?? "Unknown opening"}</strong>, {game.game_result}
         </p>
 
-        {deviationMove && currentPly === deviationMove.ply && (
-          <div>
-            <p>
-              <strong>Left book here.</strong>
-            </p>
-            <p>
-              Played <strong>{deviationMove.san}</strong>; book plays{" "}
-              {game.book_moves && game.book_moves.length > 0
-                ? game.book_moves.map((m) => m.san).join(", ")
-                : "(no book moves recorded)"}
-            </p>
-          </div>
-        )}
+        {deviationMove && currentPly === deviationMove.ply && <DeviationCallout game={game} move={deviationMove} />}
         {game.deviation_ply === null && <p>Stayed in book the whole game.</p>}
 
         <ol className="move-list">

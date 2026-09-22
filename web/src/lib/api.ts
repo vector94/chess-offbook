@@ -1,4 +1,4 @@
-import type { LatestGame } from "./models";
+import type { Deviation, LatestGame } from "./models";
 
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -15,6 +15,21 @@ async function getJson<T>(path: string): Promise<T> {
   return readJson<T>(await fetch(API_BASE_URL + path));
 }
 
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(API_BASE_URL + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  return readJson<T>(response);
+}
+
 export function getLatestGame(username: string): Promise<LatestGame> {
   return getJson(`/api/latest-game?username=${encodeURIComponent(username)}`);
+}
+
+export async function explainDeviation(deviation: Deviation): Promise<string> {
+  const body = await postJson<{ explanation: string }>("/api/latest-game/explain", deviation);
+  return body.explanation;
 }

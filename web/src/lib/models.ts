@@ -16,3 +16,11 @@ export type Game = {
 };
 
 export type LatestGame = { found: false } | Game;
+
+export type Deviation = {
+  fen: string;
+  played_san: string;
+  book_moves: BookMove[];
+  opening_name: string | null;
+  game_result: GameResult;
+};
