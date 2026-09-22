@@ -46,3 +46,8 @@ class ExplainRequest(BaseModel):
     book_moves: list[BookMove]
     opening_name: str | None
     game_result: str
+
+
+class ExplainResponse(BaseModel):
+    explanation: str
+    cached: bool
