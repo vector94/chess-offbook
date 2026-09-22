@@ -1,4 +1,4 @@
-CREATE TABLE explanations (
+CREATE TABLE IF NOT EXISTS explanations (
     cache_key   text PRIMARY KEY,
     fen         text NOT NULL,
     played_san  text NOT NULL,

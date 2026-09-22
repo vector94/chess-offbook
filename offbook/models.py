@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RawGame(BaseModel):
@@ -41,11 +41,11 @@ class Deviation(BaseModel):
 
 
 class ExplainRequest(BaseModel):
-    fen: str
-    played_san: str
-    book_moves: list[BookMove]
-    opening_name: str | None
-    game_result: str
+    fen: str = Field(max_length=100)
+    played_san: str = Field(max_length=10)
+    book_moves: list[BookMove] = Field(max_length=20)
+    opening_name: str | None = Field(default=None, max_length=200)
+    game_result: Literal["win", "draw", "loss"]
 
 
 class ExplainResponse(BaseModel):

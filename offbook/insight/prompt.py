@@ -1,14 +1,11 @@
 import hashlib
-import json
 
 from offbook.models import ExplainRequest
 
 
-def build_cache_key(request: ExplainRequest) -> str:
-    moves = sorted(request.book_moves, key=lambda m: m.uci)
-    moves_json = json.dumps([m.model_dump() for m in moves], sort_keys=True)
-    payload = f"{request.fen}|{request.played_san}|{moves_json}"
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+def cache_key(prompt: str) -> str:
+    # the prompt holds everything that changes the answer, so a changed prompt gets a new key by itself
+    return hashlib.sha256(prompt.encode()).hexdigest()
 
 
 def build_prompt(request: ExplainRequest) -> str:
