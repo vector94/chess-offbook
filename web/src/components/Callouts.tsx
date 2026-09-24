@@ -4,11 +4,18 @@ import { ANNOTATION, moveLabel } from "../lib/format";
 import type { FlaggedMove, Game } from "../lib/models";
 import type { ReplayMove } from "../lib/pgnReplay";
 
-function Explanation({ state }: { state: RequestState<string> }) {
+function Explanation({ state, onRetry }: { state: RequestState<string>; onRetry: () => void }) {
   if (state.phase === "loading") return <p>Generating explanation...</p>;
   if (state.phase === "done") return <p>{state.data}</p>;
 
-  return <p>Explanation unavailable.</p>;
+  return (
+    <p>
+      Explanation unavailable.{" "}
+      <button type="button" onClick={onRetry}>
+        Try again
+      </button>
+    </p>
+  );
 }
 
 export function DeviationCallout({ game, move }: { game: Game; move: ReplayMove }) {
@@ -21,7 +28,7 @@ export function DeviationCallout({ game, move }: { game: Game; move: ReplayMove 
     game_result: game.game_result,
   };
 
-  const [explanation] = useRequest(deviation, explainDeviation);
+  const [explanation, retry] = useRequest(deviation, explainDeviation);
 
   return (
     <div>
@@ -32,13 +39,13 @@ export function DeviationCallout({ game, move }: { game: Game; move: ReplayMove 
         Played <strong>{move.san}</strong>; book plays{" "}
         {bookMoves.length > 0 ? bookMoves.map((m) => m.san).join(", ") : "(no book moves recorded)"}
       </p>
-      <Explanation state={explanation} />
+      <Explanation state={explanation} onRetry={retry} />
     </div>
   );
 }
 
 export function MistakeCallout({ move }: { move: FlaggedMove }) {
-  const [explanation] = useRequest(move, explainMistake);
+  const [explanation, retry] = useRequest(move, explainMistake);
   const label = move.classification === "blunder" ? "Blunder" : "Mistake";
 
   return (
@@ -49,7 +56,7 @@ export function MistakeCallout({ move }: { move: FlaggedMove }) {
       </p>
       {move.refutation_line.length > 0 && <p>It allowed: {move.refutation_line.join(" ")}</p>}
       <p>Better line: {move.best_line.join(" ")}</p>
-      <Explanation state={explanation} />
+      <Explanation state={explanation} onRetry={retry} />
     </div>
   );
 }

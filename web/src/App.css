@@ -39,16 +39,20 @@
   gap: 0.25rem;
 }
 
-.move-list li {
+.move-list button {
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
 }
 
-.move-list .current {
+.move-list .current button {
   background: #4a90d9;
   color: white;
 }
 
-.move-list .deviation {
+.move-list .deviation button {
   text-decoration: underline;
 }
 

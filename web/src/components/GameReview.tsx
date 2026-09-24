@@ -1,5 +1,5 @@
 import { DEFAULT_POSITION } from "chess.js";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
 import { useRequest } from "../hooks/useRequest";
 import { getGameAnalysis } from "../lib/api";
@@ -28,6 +28,18 @@ export function GameReview({ game }: { game: Game }) {
 
   const goBack = () => setCurrentPly((ply) => Math.max(0, ply - 1));
   const goForward = () => setCurrentPly((ply) => Math.min(moves.length, ply + 1));
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLInputElement) return;
+      if (event.key === "ArrowLeft") goBack();
+      if (event.key === "ArrowRight") goForward();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moves.length]);
 
   return (
     <div className="game-review">
@@ -60,10 +72,12 @@ export function GameReview({ game }: { game: Game }) {
             const className = move.ply === currentPly ? "current" : move.ply === game.deviation_ply ? "deviation" : "";
 
             return (
-              <li key={move.ply} className={className} onClick={() => setCurrentPly(move.ply)}>
-                {move.color === "w" ? `${Math.ceil(move.ply / 2)}. ` : ""}
-                {move.san}
-                {flagged && <span className={flagged.classification}>{ANNOTATION[flagged.classification]}</span>}
+              <li key={move.ply} className={className}>
+                <button type="button" onClick={() => setCurrentPly(move.ply)}>
+                  {move.color === "w" ? `${Math.ceil(move.ply / 2)}. ` : ""}
+                  {move.san}
+                  {flagged && <span className={flagged.classification}>{ANNOTATION[flagged.classification]}</span>}
+                </button>
               </li>
             );
           })}
