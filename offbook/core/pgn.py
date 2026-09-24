@@ -14,11 +14,6 @@ class PlyMove:
     uci: str
 
 
-def position_key(fen: str) -> str:
-    fields = fen.split()
-    return " ".join(fields[:4])
-
-
 def replay_moves(pgn_text: str) -> list[PlyMove]:
     game = chess.pgn.read_game(io.StringIO(pgn_text))
     if game is None:
