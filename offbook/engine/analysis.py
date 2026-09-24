@@ -54,12 +54,15 @@ def positions_from_pgn(pgn: str) -> tuple[list[chess.Board], list[chess.Move]]:
 
 
 def analyse_positions(boards: list[chess.Board], engine: chess.engine.SimpleEngine, depth: int) -> list[dict | None]:
+    # a new game id makes python-chess send ucinewgame, so nothing carries over from the last game
+    game_id = object()
+
     analyses = []
     for board in boards:
         if board.is_game_over():
             analyses.append(None)
         else:
-            analyses.append(engine.analyse(board, chess.engine.Limit(depth=depth)))
+            analyses.append(engine.analyse(board, chess.engine.Limit(depth=depth), game=game_id))
 
     return analyses
 

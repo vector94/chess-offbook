@@ -9,38 +9,47 @@ Enter a Chess.com username and OffBook reviews that player's latest game:
 
 ## Architecture
 
-Three services, each run as its own process:
+Four services, each run as its own process:
 
 ```
 browser: React SPA served by web (:5173)
    │ REST
    ▼
-api (FastAPI, :8000) ─────► Chess.com public API     latest game
-   │                  ─────► Lichess opening explorer book moves, per-position stats
-   │                  ─────► Stockfish (subprocess)   mistakes and blunders
+api (FastAPI, :8000) ──────► Chess.com public API      latest game
+   │   │              ──────► Lichess opening explorer  book moves, per-position stats
+   │   │ HTTP
+   │   ▼
+   │  engine (FastAPI, :8001) ─► Stockfish processes    mistakes and blunders
    │ HTTP
    ▼
-insight (FastAPI, :8002) ─► Ollama (:11434)           explanations
-                         ─► Postgres                  explanation cache
+insight (FastAPI, :8002) ──► Ollama (:11434)            explanations
+                         ──► Postgres                   explanation cache
 ```
 
 - **web** (`web/`): a static React + Vite single-page app. It only talks to `api`.
 - **api** (`offbook/api`, `offbook/core`): the public entry point. It is stateless; the
   browser sends the game's PGN back for analysis instead of the server storing games.
+- **engine** (`offbook/engine`): internal only. It runs the CPU-heavy Stockfish analysis, so it
+  can be scaled separately from `api`. It keeps a fixed pool of Stockfish processes that are
+  reused between games. The pool size caps how many games are analysed at once; a request
+  that can't get an engine in time gets a 503.
 - **insight** (`offbook/insight`): internal only, never called by the browser. It builds a
   prompt, asks Ollama for an explanation and caches the answer in Postgres, keyed by the
   request, the model and the prompt version.
 
-`offbook/models.py` holds the pydantic models shared by `api` and `insight`.
+`offbook/models.py` holds the pydantic models shared by the Python services. The services
+don't import each other's code; they only talk over HTTP.
 
 | Service | Endpoint | Purpose |
 |---|---|---|
 | api | `GET /api/latest-game?username=` | Latest game plus where it left opening theory |
-| api | `POST /api/latest-game/analysis` | Stockfish mistakes and blunders for a PGN |
+| api | `POST /api/latest-game/analysis` | Mistakes and blunders for a PGN (forwarded to engine) |
 | api | `POST /api/latest-game/explain` | Explanation of the opening deviation (forwarded to insight) |
 | api | `POST /api/latest-game/explain-mistake` | Explanation of a mistake or blunder (forwarded to insight) |
 | api | `GET /api/explorer?fen=` | Lichess move statistics for one position |
 | api | `GET /healthz` | Liveness |
+| engine | `POST /analyze` | Stockfish analysis of a PGN; 503 if every engine is busy |
+| engine | `GET /healthz` | Liveness |
 | insight | `POST /explain`, `POST /explain-mistake` | Generate or fetch a cached explanation |
 | insight | `GET /healthz` | Returns 503 if Ollama is unreachable |
 
@@ -50,8 +59,8 @@ insight (FastAPI, :8002) ─► Ollama (:11434)           explanations
 - Node.js and npm
 - Postgres running locally
 - [Ollama](https://ollama.com) running locally, with the model pulled: `ollama pull llama3.1:8b`
-- Stockfish on your `PATH` as `stockfish` (macOS: `brew install stockfish`). Without it,
-  engine analysis returns 503 and the page shows "Engine analysis unavailable".
+- Stockfish (macOS: `brew install stockfish`), on your `PATH` or at `STOCKFISH_PATH`. The
+  engine service won't start without it, and the page then shows "Engine analysis unavailable".
 - A Lichess personal API token, which the opening explorer requires:
   <https://lichess.org/account/oauth/token>
 
@@ -71,10 +80,11 @@ cp .env.example .env
 
 ## Running
 
-In three terminals, from the repo root:
+In four terminals, from the repo root:
 
 ```
 uv run uvicorn offbook.api.main:app --port 8000
+uv run uvicorn offbook.engine.main:app --port 8001
 uv run uvicorn offbook.insight.main:app --port 8002
 cd web && npm run dev
 ```
@@ -83,19 +93,24 @@ Then open <http://localhost:5173>.
 
 ## Configuration
 
-Both Python services read environment variables, and also load a `.env` file in the repo
+The Python services read environment variables, and also load a `.env` file in the repo
 root if one exists.
 
 | Variable | Service | Default |
 |---|---|---|
 | `LICHESS_TOKEN` | api | none (required) |
 | `INSIGHT_SERVICE_URL` | api | `http://localhost:8002` |
+| `ENGINE_SERVICE_URL` | api | `http://localhost:8001` |
 | `CHESSCOM_BASE_URL` | api | `https://api.chess.com` |
 | `LICHESS_EXPLORER_URL` | api | `https://explorer.lichess.ovh` |
 | `EXPLORER_SPEEDS` | api | `blitz,rapid,classical` |
 | `EXPLORER_RATINGS` | api | `1600,1800,2000,2200` |
 | `BOOK_MIN_SHARE`, `BOOK_TOP_N`, `BOOK_MIN_GAMES`, `MAX_BOOK_PLY` | api | `0.05`, `3`, `50`, `20` |
 | `HTTP_RETRY_MAX` | api | `4` |
+| `STOCKFISH_PATH` | engine | `stockfish` |
+| `ENGINE_DEPTH` | engine | `14` |
+| `ENGINE_WORKERS` | engine | `2` (Stockfish processes, and the most games analysed at once) |
+| `ENGINE_BUSY_TIMEOUT_SECONDS` | engine | `30` (how long a request waits for a free engine) |
 | `INSIGHT_DATABASE_URL` | insight | `postgresql://localhost/offbook_insight_dev` |
 | `OLLAMA_BASE_URL` | insight | `http://localhost:11434` |
 | `OLLAMA_MODEL` | insight | `llama3.1:8b` |

@@ -77,3 +77,11 @@ class MistakeExplainRequest(BaseModel):
 
 class FlaggedMove(MistakeExplainRequest):
     ply: int
+
+
+class GameAnalysisRequest(BaseModel):
+    pgn: str = Field(max_length=20000)
+
+
+class GameAnalysisResponse(BaseModel):
+    moves: list[FlaggedMove]

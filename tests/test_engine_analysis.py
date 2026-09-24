@@ -2,7 +2,7 @@ import chess
 import pytest
 from chess.engine import Cp, Mate, PovScore
 
-from offbook.core.engine import classify, find_mistakes
+from offbook.engine.analysis import classify, find_mistakes
 
 
 class FakeEngine:

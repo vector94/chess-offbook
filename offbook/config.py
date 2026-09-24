@@ -22,6 +22,7 @@ class ApiConfig:
     http_retry_max: int
     lichess_token: str | None
     insight_service_url: str
+    engine_service_url: str
 
 
 def env_list(name: str, default: str) -> list[str]:
@@ -42,4 +43,5 @@ def load_api_config() -> ApiConfig:
         http_retry_max=int(os.environ.get("HTTP_RETRY_MAX", "4")),
         lichess_token=os.environ.get("LICHESS_TOKEN"),
         insight_service_url=os.environ.get("INSIGHT_SERVICE_URL", "http://localhost:8002"),
+        engine_service_url=os.environ.get("ENGINE_SERVICE_URL", "http://localhost:8001"),
     )
