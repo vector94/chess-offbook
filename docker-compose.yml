@@ -1,0 +1,64 @@
+name: offbook
+
+services:
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+
+  api:
+    build: .
+    command: uvicorn offbook.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      LICHESS_TOKEN: ${LICHESS_TOKEN:?set LICHESS_TOKEN in .env}
+      ENGINE_SERVICE_URL: http://engine:8001
+      INSIGHT_SERVICE_URL: http://insight:8002
+      CORS_ORIGINS: http://localhost:8080
+    depends_on:
+      - engine
+      - insight
+
+  engine:
+    build: .
+    command: uvicorn offbook.engine.main:app --host 0.0.0.0 --port 8001
+
+  insight:
+    build: .
+    command: uvicorn offbook.insight.main:app --host 0.0.0.0 --port 8002
+    environment:
+      INSIGHT_DATABASE_URL: postgresql://offbook:offbook@postgres/offbook_insight
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    depends_on:
+      - postgres
+      - ollama
+
+  postgres:
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_USER: offbook
+      POSTGRES_PASSWORD: offbook
+      POSTGRES_DB: offbook_insight
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+  ollama:
+    image: ollama/ollama:0.11.2
+    volumes:
+      - ollama-models:/root/.ollama
+
+  # Pulls the model into the ollama volume if it isn't there yet, then exits.
+  ollama-pull:
+    image: ollama/ollama:0.11.2
+    command: pull ${OLLAMA_MODEL:-llama3.1:8b}
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      - ollama
+    restart: on-failure
+
+volumes:
+  postgres-data:
+  ollama-models:
