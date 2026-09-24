@@ -3,9 +3,9 @@ import hashlib
 from offbook.models import ExplainRequest, MistakeExplainRequest
 
 
-def cache_key(prompt: str) -> str:
+def cache_key(prompt: str, model: str) -> str:
     # the prompt holds everything that changes the answer, so a changed prompt gets a new key by itself
-    return hashlib.sha256(prompt.encode()).hexdigest()
+    return hashlib.sha256(f"{model}\n{prompt}".encode()).hexdigest()
 
 
 def build_prompt(request: ExplainRequest) -> str:

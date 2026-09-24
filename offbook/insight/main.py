@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from offbook.insight.config import load_insight_config
 from offbook.insight.db import get_cached_explanation, run_migrations, store_explanation
@@ -15,13 +15,22 @@ logger = logging.getLogger(__name__)
 
 def explain_with_cache(prompt: str, fen: str, played_san: str) -> ExplainResponse:
     config = load_insight_config()
-    key = cache_key(prompt)
+    key = cache_key(prompt, config.ollama_model)
 
-    cached = get_cached_explanation(config.database_url, key)
+    # the cache only saves time, so if the database fails we still answer
+    try:
+        cached = get_cached_explanation(config.database_url, key)
+    except Exception:
+        logger.warning("failed to read cached explanation", exc_info=True)
+        cached = None
     if cached is not None:
         return ExplainResponse(explanation=cached, cached=True)
 
-    explanation = generate(prompt, config)
+    try:
+        explanation = generate(prompt, config)
+    except httpx.HTTPError as error:
+        logger.warning("ollama call failed: %s", error)
+        raise HTTPException(status_code=502, detail="language model unavailable")
 
     try:
         store_explanation(config.database_url, key, fen, played_san, explanation)
@@ -53,6 +62,9 @@ def explain_mistake(request: MistakeExplainRequest) -> ExplainResponse:
 @app.get("/healthz")
 def healthz() -> dict:
     config = load_insight_config()
-    with httpx.Client(timeout=5.0) as client:
-        client.get(f"{config.ollama_base_url}/api/tags").raise_for_status()
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            client.get(f"{config.ollama_base_url}/api/tags").raise_for_status()
+    except httpx.HTTPError:
+        raise HTTPException(status_code=503, detail="language model unavailable")
     return {"status": "ok"}

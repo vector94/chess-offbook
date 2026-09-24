@@ -25,7 +25,8 @@ class ApiConfig:
 
 
 def env_list(name: str, default: str) -> list[str]:
-    return os.environ.get(name, default).split(",")
+    value = os.environ.get(name, default)
+    return [item.strip() for item in value.split(",")]
 
 
 def load_api_config() -> ApiConfig:

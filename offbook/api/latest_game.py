@@ -1,3 +1,6 @@
+import logging
+
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -7,6 +10,7 @@ from offbook.core.detector import find_deviation
 from offbook.models import BookMove
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class LatestGameResponse(BaseModel):
@@ -28,13 +32,16 @@ def get_latest_game(username: str) -> LatestGameResponse:
     config = load_api_config()
     try:
         games = fetch_recent_games(username, config.chesscom_base_url)
+        if not games:
+            return LatestGameResponse(found=False)
+
+        game = max(games, key=lambda g: g.played_at)
+        deviation = find_deviation(game, config)
     except PlayerNotFound:
         raise HTTPException(status_code=404, detail=f"no such player: {username}")
-    if not games:
-        return LatestGameResponse(found=False)
-
-    game = max(games, key=lambda g: g.played_at)
-    deviation = find_deviation(game, config)
+    except httpx.HTTPError as error:
+        logger.warning("latest game lookup failed: %s", error)
+        raise HTTPException(status_code=502, detail="chess.com or lichess unavailable")
 
     return LatestGameResponse(
         found=True,
