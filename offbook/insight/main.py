@@ -2,14 +2,17 @@ import logging
 from contextlib import asynccontextmanager
 
 import httpx
+import psycopg
 from fastapi import FastAPI, HTTPException
 
 from offbook.insight.config import load_insight_config
-from offbook.insight.db import get_cached_explanation, run_migrations, store_explanation
-from offbook.insight.ollama_client import generate
+from offbook.insight.db import check_database, get_cached_explanation, run_migrations_with_retry, store_explanation
+from offbook.insight.ollama_client import generate, model_is_pulled
 from offbook.insight.prompt import build_mistake_prompt, build_prompt, cache_key
+from offbook.logs import configure_logging
 from offbook.models import ExplainRequest, ExplainResponse, MistakeExplainRequest
 
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +45,7 @@ def explain_with_cache(prompt: str, fen: str, played_san: str) -> ExplainRespons
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_migrations(load_insight_config().database_url)
+    run_migrations_with_retry(load_insight_config().database_url)
     yield
 
 
@@ -59,12 +62,28 @@ def explain_mistake(request: MistakeExplainRequest) -> ExplainResponse:
     return explain_with_cache(build_mistake_prompt(request), request.fen_before, request.played_san)
 
 
+# healthz only says the process is up, readyz also checks Postgres, Ollama and the model
 @app.get("/healthz")
 def healthz() -> dict:
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz() -> dict:
     config = load_insight_config()
+    down = []
+
     try:
-        with httpx.Client(timeout=5.0) as client:
-            client.get(f"{config.ollama_base_url}/api/tags").raise_for_status()
+        check_database(config.database_url)
+    except psycopg.Error:
+        down.append("database")
+
+    try:
+        if not model_is_pulled(config):
+            down.append("model not pulled yet")
     except httpx.HTTPError:
-        raise HTTPException(status_code=503, detail="language model unavailable")
+        down.append("language model")
+
+    if down:
+        raise HTTPException(status_code=503, detail="not ready: " + ", ".join(down))
     return {"status": "ok"}

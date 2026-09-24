@@ -8,8 +8,10 @@ from fastapi import FastAPI, HTTPException
 from offbook.engine.analysis import find_mistakes
 from offbook.engine.config import load_engine_config
 from offbook.engine.pool import EnginePool
+from offbook.logs import configure_logging
 from offbook.models import GameAnalysisRequest, GameAnalysisResponse
 
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
