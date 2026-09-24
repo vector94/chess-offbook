@@ -7,10 +7,28 @@ from fastapi import FastAPI
 from offbook.insight.config import load_insight_config
 from offbook.insight.db import get_cached_explanation, run_migrations, store_explanation
 from offbook.insight.ollama_client import generate
-from offbook.insight.prompt import build_prompt, cache_key
-from offbook.models import ExplainRequest, ExplainResponse
+from offbook.insight.prompt import build_mistake_prompt, build_prompt, cache_key
+from offbook.models import ExplainRequest, ExplainResponse, MistakeExplainRequest
 
 logger = logging.getLogger(__name__)
+
+
+def explain_with_cache(prompt: str, fen: str, played_san: str) -> ExplainResponse:
+    config = load_insight_config()
+    key = cache_key(prompt)
+
+    cached = get_cached_explanation(config.database_url, key)
+    if cached is not None:
+        return ExplainResponse(explanation=cached, cached=True)
+
+    explanation = generate(prompt, config)
+
+    try:
+        store_explanation(config.database_url, key, fen, played_san, explanation)
+    except Exception:
+        logger.warning("failed to cache explanation", exc_info=True)
+
+    return ExplainResponse(explanation=explanation, cached=False)
 
 
 @asynccontextmanager
@@ -24,22 +42,12 @@ app = FastAPI(title="OffBook Insight", lifespan=lifespan)
 
 @app.post("/explain")
 def explain(request: ExplainRequest) -> ExplainResponse:
-    config = load_insight_config()
-    prompt = build_prompt(request)
-    key = cache_key(prompt)
+    return explain_with_cache(build_prompt(request), request.fen, request.played_san)
 
-    cached = get_cached_explanation(config.database_url, key)
-    if cached is not None:
-        return ExplainResponse(explanation=cached, cached=True)
 
-    explanation = generate(prompt, config)
-
-    try:
-        store_explanation(config.database_url, key, request.fen, request.played_san, explanation)
-    except Exception:
-        logger.warning("failed to cache explanation", exc_info=True)
-
-    return ExplainResponse(explanation=explanation, cached=False)
+@app.post("/explain-mistake")
+def explain_mistake(request: MistakeExplainRequest) -> ExplainResponse:
+    return explain_with_cache(build_mistake_prompt(request), request.fen_before, request.played_san)
 
 
 @app.get("/healthz")

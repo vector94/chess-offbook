@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -62,3 +62,18 @@ class ExplainRequest(BaseModel):
 class ExplainResponse(BaseModel):
     explanation: str
     cached: bool
+
+
+class MistakeExplainRequest(BaseModel):
+    color: Literal["white", "black"]
+    fen_before: str = Field(max_length=100)
+    played_san: str = Field(max_length=10)
+    classification: Literal["mistake", "blunder"]
+    best_san: str = Field(max_length=10)
+    best_line: list[Annotated[str, Field(max_length=10)]] = Field(max_length=10)
+    win_chance_before: float = Field(ge=0.0, le=1.0)
+    win_chance_after: float = Field(ge=0.0, le=1.0)
+
+
+class FlaggedMove(MistakeExplainRequest):
+    ply: int

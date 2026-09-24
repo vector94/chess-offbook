@@ -4,12 +4,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from offbook.api import explanations, latest_game, positions
+from offbook.api import analysis, explanations, latest_game, positions
 from offbook.core.chesscom import PlayerNotFound, Profile, fetch_profile
 
 app = FastAPI(title="OffBook API", version="0.1.0")
 app.include_router(latest_game.router)
 app.include_router(positions.router)
+app.include_router(analysis.router)
 app.include_router(explanations.router)
 
 # no cookies or auth, so "*" is fine
