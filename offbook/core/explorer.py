@@ -3,7 +3,7 @@ import time
 import httpx
 
 from offbook.config import USER_AGENT, ApiConfig
-from offbook.models import ExplorerResponse
+from offbook.models import BookMove, ExplorerResponse
 
 RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
 
@@ -38,3 +38,16 @@ def fetch_explorer(fen: str, config: ApiConfig) -> ExplorerResponse:
     for move in result.moves:
         move.uci = CASTLING_UCI.get(move.uci, move.uci)
     return result
+
+
+def moves_with_share(response: ExplorerResponse) -> list[BookMove]:
+    # the most played move comes first
+    total = response.total_games()
+
+    moves = []
+    for move in response.moves:
+        share = move.games / total if total > 0 else 0.0
+        moves.append(BookMove(san=move.san, uci=move.uci, games=move.games, share=share))
+    moves.sort(key=lambda m: m.games, reverse=True)
+
+    return moves

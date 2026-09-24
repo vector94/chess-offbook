@@ -4,6 +4,7 @@ import { Chessboard } from "react-chessboard";
 import type { Game } from "../lib/models";
 import { replayPgn } from "../lib/pgnReplay";
 import { DeviationCallout } from "./Callouts";
+import { GameStats } from "./GameStats";
 
 export function GameReview({ game }: { game: Game }) {
   const moves = useMemo(() => replayPgn(game.pgn), [game.pgn]);
@@ -41,10 +42,6 @@ export function GameReview({ game }: { game: Game }) {
       </div>
 
       <div className="game-review-info">
-        <p>
-          <strong>{game.opening_name ?? "Unknown opening"}</strong>, {game.game_result}
-        </p>
-
         {deviationMove && currentPly === deviationMove.ply && <DeviationCallout game={game} move={deviationMove} />}
         {game.deviation_ply === null && <p>Stayed in book the whole game.</p>}
 
@@ -61,6 +58,8 @@ export function GameReview({ game }: { game: Game }) {
           })}
         </ol>
       </div>
+
+      <GameStats game={game} moves={moves} fen={position} nextMove={moves[currentPly]?.san} />
     </div>
   );
 }

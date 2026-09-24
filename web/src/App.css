@@ -52,6 +52,19 @@
   text-decoration: underline;
 }
 
+.game-stats {
+  width: 240px;
+  font-size: 0.9rem;
+}
+
+.game-stats table {
+  width: 100%;
+}
+
+.game-stats .played {
+  font-weight: bold;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

@@ -20,12 +20,23 @@ class ExplorerMove(BaseModel):
     draws: int
     black: int
 
+    @property
+    def games(self) -> int:
+        return self.white + self.draws + self.black
+
 
 class ExplorerResponse(BaseModel):
     moves: list[ExplorerMove]
     white: int = 0
     draws: int = 0
     black: int = 0
+
+    def total_games(self) -> int:
+        # moves only has the most common moves, so use the top-level counts when we have them
+        total = self.white + self.draws + self.black
+        if total > 0:
+            return total
+        return sum(move.games for move in self.moves)
 
 
 class BookMove(BaseModel):

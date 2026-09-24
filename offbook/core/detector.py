@@ -1,27 +1,12 @@
 from offbook.config import ApiConfig
-from offbook.core.explorer import fetch_explorer
+from offbook.core.explorer import fetch_explorer, moves_with_share
 from offbook.core.pgn import replay_moves
 from offbook.models import BookMove, Deviation, ExplorerResponse, RawGame
 
 
-def total_games(response: ExplorerResponse) -> int:
-    # moves only has the most common moves, so use the top-level counts when we have them
-    total = response.white + response.draws + response.black
-    if total > 0:
-        return total
-    return sum(m.white + m.draws + m.black for m in response.moves)
-
-
 def select_book_moves(response: ExplorerResponse, config: ApiConfig) -> list[BookMove]:
-    total = total_games(response)
-
-    moves = []
-    for move in response.moves:
-        games = move.white + move.draws + move.black
-        share = games / total if total > 0 else 0.0
-        moves.append(BookMove(san=move.san, uci=move.uci, games=games, share=share))
-    moves.sort(key=lambda m: m.games, reverse=True)
-
+    # keep the top few moves, and any other move that is played often enough
+    moves = moves_with_share(response)
     return [m for i, m in enumerate(moves) if i < config.book_top_n or m.share >= config.book_min_share]
 
 
@@ -33,7 +18,7 @@ def find_deviation(game: RawGame, config: ApiConfig) -> Deviation | None:
             return None
 
         response = fetch_explorer(ply.fen_before, config)
-        if total_games(response) < config.book_min_games:
+        if response.total_games() < config.book_min_games:
             return None
 
         book = select_book_moves(response, config)

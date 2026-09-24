@@ -17,6 +17,8 @@ export type Game = {
 
 export type LatestGame = { found: false } | Game;
 
+export type PositionStats = { total_games: number; moves: BookMove[] };
+
 export type Deviation = {
   fen: string;
   played_san: string;
