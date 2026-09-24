@@ -47,7 +47,8 @@ export function MistakeCallout({ move }: { move: FlaggedMove }) {
         <strong className={move.classification}>{label}:</strong> {moveLabel(move.ply, move.played_san)}
         {ANNOTATION[move.classification]} Better was <strong>{moveLabel(move.ply, move.best_san)}</strong>
       </p>
-      <p>Engine line: {move.best_line.join(" ")}</p>
+      {move.refutation_line.length > 0 && <p>It allowed: {move.refutation_line.join(" ")}</p>}
+      <p>Better line: {move.best_line.join(" ")}</p>
       <Explanation state={explanation} />
     </div>
   );

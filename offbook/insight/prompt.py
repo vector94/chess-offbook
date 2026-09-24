@@ -27,21 +27,33 @@ def build_prompt(request: ExplainRequest) -> str:
     )
 
 
+def labelled_line(moves: list[str], first: str, second: str) -> str:
+    # name the side on every move, small models lose track of whose move it is
+    sides = [first, second]
+    return ", ".join(f"{sides[i % 2]} {san}" for i, san in enumerate(moves))
+
+
 def build_mistake_prompt(request: MistakeExplainRequest) -> str:
     mover = request.color.capitalize()
     opponent = "Black" if request.color == "white" else "White"
-    # name the side on every move, small models lose track of whose move it is
-    sides = [mover, opponent]
-    line = ", ".join(f"{sides[i % 2]} {san}" for i, san in enumerate(request.best_line))
+    played = request.played_san
+
+    allowed = ""
+    task = f"explain why {played} was a {request.classification}"
+    if request.refutation_line:
+        allowed = f"What {played} allowed, engine line: {labelled_line(request.refutation_line, opponent, mover)}\n"
+        task = f"explain what {played} allowed"
+
     return (
         "You are a chess coach commenting on one move from a game, in plain English.\n\n"
         f"Position (FEN, before the move): {request.fen_before}\n"
-        f"{mover} played: {request.played_san}\n"
-        f"{mover}'s better move was {request.best_san}. Engine line: {line}\n"
+        f"{mover} played: {played}\n"
+        f"{allowed}"
+        f"{mover}'s better move was {request.best_san}. Engine line: "
+        f"{labelled_line(request.best_line, mover, opponent)}\n"
         f"{mover}'s winning chances went from {request.win_chance_before:.0%} to "
-        f"{request.win_chance_after:.0%}, so {request.played_san} was a {request.classification}.\n\n"
-        f"In 2-4 sentences, explain why {request.played_san} was a {request.classification} and why "
-        f"{request.best_san} is better. Use only the position and the moves given here; do not invent "
-        "tactics or variations that are not in the engine line. Refer to the players as White and Black; "
-        'never use "you", "we" or "our".'
+        f"{request.win_chance_after:.0%}, so {played} was a {request.classification}.\n\n"
+        f"In 2-4 sentences, {task}, then why {request.best_san} is better. Use only the position and "
+        "the moves given here; do not invent tactics or variations that are not in the engine lines. "
+        'Refer to the players as White and Black; never use "you", "we" or "our".'
     )

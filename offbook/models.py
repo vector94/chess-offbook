@@ -71,6 +71,7 @@ class MistakeExplainRequest(BaseModel):
     classification: Literal["mistake", "blunder"]
     best_san: str = Field(max_length=10)
     best_line: list[Annotated[str, Field(max_length=10)]] = Field(max_length=10)
+    refutation_line: list[Annotated[str, Field(max_length=10)]] = Field(default=[], max_length=10)
     win_chance_before: float = Field(ge=0.0, le=1.0)
     win_chance_after: float = Field(ge=0.0, le=1.0)
 

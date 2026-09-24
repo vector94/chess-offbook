@@ -37,6 +37,7 @@ export type FlaggedMove = {
   classification: "mistake" | "blunder";
   best_san: string;
   best_line: string[];
+  refutation_line: string[];
   win_chance_before: number;
   win_chance_after: number;
 };

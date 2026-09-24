@@ -85,6 +85,10 @@ def find_mistakes(pgn: str, engine: chess.engine.SimpleEngine, depth: int) -> li
         if classification is None or not best_line or best_line[0] == move:
             continue
 
+        refutation = []
+        if analyses[i + 1] is not None:
+            refutation = analyses[i + 1].get("pv", [])[:LINE_LENGTH]
+
         flagged.append(
             FlaggedMove(
                 ply=i + 1,
@@ -94,6 +98,7 @@ def find_mistakes(pgn: str, engine: chess.engine.SimpleEngine, depth: int) -> li
                 classification=classification,
                 best_san=before_board.san(best_line[0]),
                 best_line=san_line(before_board, best_line),
+                refutation_line=san_line(after_board, refutation),
                 win_chance_before=round(before, 3),
                 win_chance_after=round(after, 3),
             )
