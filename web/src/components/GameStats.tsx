@@ -1,7 +1,7 @@
-import { useRequest } from "../hooks/useRequest";
+import { type RequestState, useRequest } from "../hooks/useRequest";
 import { getPositionStats } from "../lib/api";
-import { formatShare, moveLabel } from "../lib/format";
-import type { Game } from "../lib/models";
+import { formatShare, moveLabel, summarizeMistakes } from "../lib/format";
+import type { FlaggedMove, Game } from "../lib/models";
 import type { ReplayMove } from "../lib/pgnReplay";
 
 type GameStatsProps = {
@@ -9,9 +9,10 @@ type GameStatsProps = {
   moves: ReplayMove[];
   fen: string;
   nextMove: string | undefined;
+  analysis: RequestState<FlaggedMove[]>;
 };
 
-export function GameStats({ game, moves, fen, nextMove }: GameStatsProps) {
+export function GameStats({ game, moves, fen, nextMove, analysis }: GameStatsProps) {
   const [positionStats] = useRequest(fen, getPositionStats);
   const deviationMove = game.deviation_ply !== null ? moves[game.deviation_ply - 1] : undefined;
 
@@ -36,8 +37,22 @@ export function GameStats({ game, moves, fen, nextMove }: GameStatsProps) {
             <td>Left book</td>
             <td>{deviationMove ? moveLabel(deviationMove.ply, deviationMove.san) : "Never"}</td>
           </tr>
+          {analysis.phase === "done" && (
+            <>
+              <tr>
+                <td>White</td>
+                <td>{summarizeMistakes(analysis.data, "white")}</td>
+              </tr>
+              <tr>
+                <td>Black</td>
+                <td>{summarizeMistakes(analysis.data, "black")}</td>
+              </tr>
+            </>
+          )}
         </tbody>
       </table>
+      {analysis.phase === "loading" && <p>Analyzing with Stockfish...</p>}
+      {analysis.phase === "error" && <p>Engine analysis unavailable.</p>}
 
       <h3>Moves from this position</h3>
       {positionStats.phase === "loading" && <p>Loading...</p>}

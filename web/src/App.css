@@ -52,6 +52,14 @@
   text-decoration: underline;
 }
 
+.mistake {
+  color: #e69f00;
+}
+
+.blunder {
+  color: #e74c3c;
+}
+
 .game-stats {
   width: 240px;
   font-size: 0.9rem;

@@ -1,6 +1,7 @@
 import { type RequestState, useRequest } from "../hooks/useRequest";
-import { explainDeviation } from "../lib/api";
-import type { Game } from "../lib/models";
+import { explainDeviation, explainMistake } from "../lib/api";
+import { ANNOTATION, moveLabel } from "../lib/format";
+import type { FlaggedMove, Game } from "../lib/models";
 import type { ReplayMove } from "../lib/pgnReplay";
 
 function Explanation({ state }: { state: RequestState<string> }) {
@@ -31,6 +32,22 @@ export function DeviationCallout({ game, move }: { game: Game; move: ReplayMove 
         Played <strong>{move.san}</strong>; book plays{" "}
         {bookMoves.length > 0 ? bookMoves.map((m) => m.san).join(", ") : "(no book moves recorded)"}
       </p>
+      <Explanation state={explanation} />
+    </div>
+  );
+}
+
+export function MistakeCallout({ move }: { move: FlaggedMove }) {
+  const [explanation] = useRequest(move, explainMistake);
+  const label = move.classification === "blunder" ? "Blunder" : "Mistake";
+
+  return (
+    <div>
+      <p>
+        <strong className={move.classification}>{label}:</strong> {moveLabel(move.ply, move.played_san)}
+        {ANNOTATION[move.classification]} Better was <strong>{moveLabel(move.ply, move.best_san)}</strong>
+      </p>
+      <p>Engine line: {move.best_line.join(" ")}</p>
       <Explanation state={explanation} />
     </div>
   );
