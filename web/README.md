@@ -1,8 +1,9 @@
 # OffBook web
 
-Report page: enter a Chess.com username, watch it analyze, see where you left
-opening theory. Talks only to the `api` service over REST — no direct
-database or Python package access.
+Review page: enter a Chess.com username to see the latest game on a board,
+where it left opening theory, its mistakes and blunders, and AI explanations.
+Talks only to the `api` service over REST — no direct database or Python
+package access.
 
 ## Run
 
@@ -11,5 +12,5 @@ database or Python package access.
     npm run dev             # dev server
     npm run build            # production build
 
-The `api` service must be running separately (see the repo root README /
-docs/design.md) — this project only talks to it over HTTP.
+The `api` service must be running separately (see the repo root README) —
+this project only talks to it over HTTP.
