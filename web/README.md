@@ -1,14 +1,17 @@
 # OffBook web
 
-Review page: enter a Chess.com username to see the latest game on a board,
-where it left opening theory, its mistakes and blunders, and AI explanations.
-It only talks to the `api` service over REST.
+The React app for OffBook. It only talks to the `api` service.
 
 ## Run
 
-    npm install
-    cp .env.example .env   # edit if your api service isn't on localhost:8000
-    npm run dev             # dev server
-    npm run build            # production build
+```
+npm install
+cp .env.example .env
+npm run dev
+```
 
-The `api` service must be running separately, see the root README.
+Change `VITE_API_BASE_URL` in `.env` if the api is not on `localhost:8000`.
+
+To make a production build, run `npm run build`.
+
+The `api` service must be running, see the main README.
