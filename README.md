@@ -31,9 +31,24 @@ echo "LICHESS_TOKEN=<your token>" > .env
 docker compose up --build
 ```
 
-Then open <http://localhost:8080>. The first start downloads the model (about 5 GB for
-`llama3.1:8b`). Docker on a Mac can't use the GPU, so explanations are slower. To use the
-Ollama on your machine instead, run `OLLAMA_BASE_URL=http://host.docker.internal:11434 docker compose up`.
+Then open <http://localhost:8080>. The first start downloads the model, `llama3.2:1b`
+(about 1.3 GB). It is small so setup is quick. For better explanations pick a bigger one,
+for example `OLLAMA_MODEL=llama3.1:8b docker compose up`. To use the Ollama on your machine
+instead, run `OLLAMA_BASE_URL=http://host.docker.internal:11434 docker compose up`.
+
+## Run on Kubernetes
+
+The images are on Docker Hub as `vector94/offbook` (api, engine and insight) and
+`vector94/offbook-web`. On a local cluster such as Docker Desktop's Kubernetes:
+
+```
+kubectl create secret generic offbook --from-env-file=.env
+kubectl apply -f k8s/
+```
+
+Then open <http://localhost:8080>. Each service scales on its own, for example
+`kubectl scale deployment/engine --replicas=3`. The first start downloads the model
+(`llama3.2:1b`) into the ollama volume.
 
 ## Run without Docker
 

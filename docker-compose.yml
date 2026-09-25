@@ -30,7 +30,7 @@ services:
     environment:
       INSIGHT_DATABASE_URL: postgresql://offbook:offbook@postgres/offbook_insight
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
     depends_on:
       - postgres
       - ollama
@@ -52,7 +52,7 @@ services:
   # Pulls the model into the ollama volume if it isn't there yet, then exits.
   ollama-pull:
     image: ollama/ollama:0.11.2
-    command: pull ${OLLAMA_MODEL:-llama3.1:8b}
+    command: pull ${OLLAMA_MODEL:-llama3.2:1b}
     environment:
       OLLAMA_HOST: http://ollama:11434
     depends_on:
