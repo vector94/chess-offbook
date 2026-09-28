@@ -7,6 +7,7 @@ import { ANNOTATION } from "../lib/format";
 import type { Game } from "../lib/models";
 import { replayPgn } from "../lib/pgnReplay";
 import { DeviationCallout, MistakeCallout } from "./Callouts";
+import { EvalBar } from "./EvalBar";
 import { GameStats } from "./GameStats";
 
 export function GameReview({ game }: { game: Game }) {
@@ -16,9 +17,10 @@ export function GameReview({ game }: { game: Game }) {
   const [currentPly, setCurrentPly] = useState(game.deviation_ply ?? 0);
 
   const [analysis] = useRequest(game.pgn, getGameAnalysis);
-  const flaggedMoves = analysis.phase === "done" ? analysis.data : [];
+  const flaggedMoves = analysis.phase === "done" ? analysis.data.moves : [];
   const flaggedByPly = new Map(flaggedMoves.map((move) => [move.ply, move]));
   const currentMistake = flaggedByPly.get(currentPly);
+  const whiteChance = analysis.phase === "done" ? analysis.data.white_win_chances[currentPly] : undefined;
 
   const deviationMove = game.deviation_ply !== null ? moves[game.deviation_ply - 1] : undefined;
 
@@ -44,7 +46,12 @@ export function GameReview({ game }: { game: Game }) {
   return (
     <div className="game-review">
       <div className="game-review-board">
-        <Chessboard options={{ position, allowDragging: false }} />
+        <div className="board-with-bar">
+          <EvalBar whiteChance={whiteChance} />
+          <div className="board">
+            <Chessboard options={{ position, allowDragging: false }} />
+          </div>
+        </div>
         <div className="game-review-controls">
           <button type="button" onClick={() => setCurrentPly(0)} disabled={atStart}>
             {"|<"}

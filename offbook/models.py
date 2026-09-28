@@ -86,3 +86,4 @@ class GameAnalysisRequest(BaseModel):
 
 class GameAnalysisResponse(BaseModel):
     moves: list[FlaggedMove]
+    white_win_chances: list[float]  # one for every position, 0 to 1

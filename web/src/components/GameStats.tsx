@@ -1,7 +1,7 @@
 import { type RequestState, useRequest } from "../hooks/useRequest";
 import { getPositionStats } from "../lib/api";
 import { formatShare, moveLabel, summarizeMistakes } from "../lib/format";
-import type { FlaggedMove, Game } from "../lib/models";
+import type { Game, GameAnalysis } from "../lib/models";
 import type { ReplayMove } from "../lib/pgnReplay";
 
 type GameStatsProps = {
@@ -9,7 +9,7 @@ type GameStatsProps = {
   moves: ReplayMove[];
   fen: string;
   nextMove: string | undefined;
-  analysis: RequestState<FlaggedMove[]>;
+  analysis: RequestState<GameAnalysis>;
 };
 
 export function GameStats({ game, moves, fen, nextMove, analysis }: GameStatsProps) {
@@ -41,11 +41,11 @@ export function GameStats({ game, moves, fen, nextMove, analysis }: GameStatsPro
             <>
               <tr>
                 <td>White</td>
-                <td>{summarizeMistakes(analysis.data, "white")}</td>
+                <td>{summarizeMistakes(analysis.data.moves, "white")}</td>
               </tr>
               <tr>
                 <td>Black</td>
-                <td>{summarizeMistakes(analysis.data, "black")}</td>
+                <td>{summarizeMistakes(analysis.data.moves, "black")}</td>
               </tr>
             </>
           )}

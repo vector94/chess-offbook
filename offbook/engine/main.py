@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import chess.engine
 from fastapi import FastAPI, HTTPException
 
-from offbook.engine.analysis import find_mistakes
+from offbook.engine.analysis import analyse_game
 from offbook.engine.config import load_engine_config
 from offbook.engine.pool import EnginePool
 from offbook.logs import configure_logging
@@ -35,7 +35,7 @@ def analyze(request: GameAnalysisRequest) -> GameAnalysisResponse:
 
     try:
         with pool.borrow(config.busy_timeout_seconds) as engine:
-            moves = find_mistakes(request.pgn, engine, config.depth)
+            return analyse_game(request.pgn, engine, config.depth)
     except queue.Empty:
         raise HTTPException(status_code=503, detail="engine busy")
     except ValueError:
@@ -43,8 +43,6 @@ def analyze(request: GameAnalysisRequest) -> GameAnalysisResponse:
     except chess.engine.EngineError as error:
         logger.warning("engine analysis failed: %s", error)
         raise HTTPException(status_code=503, detail="engine unavailable")
-
-    return GameAnalysisResponse(moves=moves)
 
 
 @app.get("/healthz")

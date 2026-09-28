@@ -41,3 +41,5 @@ export type FlaggedMove = {
   win_chance_before: number;
   win_chance_after: number;
 };
+
+export type GameAnalysis = { moves: FlaggedMove[]; white_win_chances: number[] };

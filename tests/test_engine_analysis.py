@@ -2,7 +2,7 @@ import chess
 import pytest
 from chess.engine import Cp, Mate, PovScore
 
-from offbook.engine.analysis import classify, find_mistakes
+from offbook.engine.analysis import analyse_game, classify
 
 
 class FakeEngine:
@@ -24,14 +24,19 @@ def test_classify():
 def test_scholars_mate_blunder():
     engine = FakeEngine({5: (Cp(0), ["g7g6", "h5f3"]), 6: (Mate(1), ["h5f7"])})
 
-    moves = find_mistakes("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#", engine, depth=14)
+    analysis = analyse_game("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#", engine, depth=14)
+    moves = analysis.moves
 
     assert len(moves) == 1
     assert moves[0].played_san == "Nf6"
     assert moves[0].classification == "blunder"
     assert moves[0].best_san == "g6"
 
+    # 7 moves give 8 positions, and White won in the last one
+    assert len(analysis.white_win_chances) == 8
+    assert analysis.white_win_chances[-1] == 1.0
+
 
 def test_illegal_move():
     with pytest.raises(ValueError):
-        find_mistakes("1. e4 e5 2. Ke3", FakeEngine({}), depth=14)
+        analyse_game("1. e4 e5 2. Ke3", FakeEngine({}), depth=14)

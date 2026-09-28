@@ -1,4 +1,4 @@
-import type { Deviation, FlaggedMove, LatestGame, PositionStats } from "./models";
+import type { Deviation, FlaggedMove, GameAnalysis, LatestGame, PositionStats } from "./models";
 
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -33,9 +33,8 @@ export function getPositionStats(fen: string): Promise<PositionStats> {
   return getJson(`/api/explorer?fen=${encodeURIComponent(fen)}`);
 }
 
-export async function getGameAnalysis(pgn: string): Promise<FlaggedMove[]> {
-  const body = await postJson<{ moves: FlaggedMove[] }>("/api/latest-game/analysis", { pgn });
-  return body.moves;
+export function getGameAnalysis(pgn: string): Promise<GameAnalysis> {
+  return postJson("/api/latest-game/analysis", { pgn });
 }
 
 export async function explainDeviation(deviation: Deviation): Promise<string> {

@@ -11,8 +11,35 @@
 }
 
 .game-review-board {
-  width: 320px;
+  width: 350px;
   flex-shrink: 0;
+}
+
+.board-with-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.board-with-bar .board {
+  flex: 1;
+}
+
+.eval-bar {
+  position: relative;
+  width: 20px;
+  background: #333;
+}
+
+.eval-bar.waiting {
+  opacity: 0.3;
+}
+
+.eval-bar-white {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: #eee;
+  transition: height 0.3s;
 }
 
 .game-review-controls {

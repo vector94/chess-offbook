@@ -4,7 +4,7 @@ import chess
 import chess.engine
 import chess.pgn
 
-from offbook.models import FlaggedMove
+from offbook.models import FlaggedMove, GameAnalysisResponse
 
 # drops in the mover's winning chance (0 to 1), same thresholds as Lichess
 MISTAKE_DROP = 0.10
@@ -67,10 +67,7 @@ def analyse_positions(boards: list[chess.Board], engine: chess.engine.SimpleEngi
     return analyses
 
 
-def find_mistakes(pgn: str, engine: chess.engine.SimpleEngine, depth: int) -> list[FlaggedMove]:
-    boards, moves = positions_from_pgn(pgn)
-    analyses = analyse_positions(boards, engine, depth)
-
+def find_mistakes(boards: list[chess.Board], moves: list[chess.Move], analyses: list[dict | None]) -> list[FlaggedMove]:
     flagged = []
     for i, move in enumerate(moves):
         before_board = boards[i]
@@ -105,3 +102,15 @@ def find_mistakes(pgn: str, engine: chess.engine.SimpleEngine, depth: int) -> li
         )
 
     return flagged
+
+
+def analyse_game(pgn: str, engine: chess.engine.SimpleEngine, depth: int) -> GameAnalysisResponse:
+    boards, moves = positions_from_pgn(pgn)
+    analyses = analyse_positions(boards, engine, depth)
+
+    # White's winning chance in every position, for the evaluation bar
+    white_win_chances = []
+    for board, analysis in zip(boards, analyses):
+        white_win_chances.append(round(winning_chance(board, analysis, chess.WHITE), 3))
+
+    return GameAnalysisResponse(moves=find_mistakes(boards, moves, analyses), white_win_chances=white_win_chances)
